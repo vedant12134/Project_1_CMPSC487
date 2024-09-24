@@ -1,0 +1,61 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4; /* Light background color for better contrast */
+    margin: 0;
+    padding: 20px;
+}
+
+h1, h2 {
+    color: #002D72; /* Penn State Blue */
+    text-align: center; /* Center-align headings for better presentation */
+}
+
+div {
+    max-width: 600px;
+    margin: 20px auto;
+}
+
+form {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #ffffff; /* White background for form */
+    border: 1px solid #ddd; /* Light gray border */
+    border-radius: 5px; /* Rounded corners */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+input {
+    padding: 10px; /* Add padding for better spacing */
+    border: 1px solid #002D72; /* Penn State Blue border */
+    border-radius: 4px; /* Slightly rounded corners */
+    width: calc(100% - 22px); /* Full width minus padding and border */
+    box-sizing: border-box; /* Include padding and border in width */
+    margin-bottom: 10px; /* Space between inputs */
+}
+
+button {
+    padding: 10px 15px; /* Padding for button */
+    background-color: #002D72; /* Penn State Blue background for buttons */
+    color: white; /* White text color */
+    border: none; /* No border */
+    border-radius: 4px; /* Rounded corners */
+    cursor: pointer; /* Pointer cursor on hover */
+}
+
+button:hover {
+    background-color: #001A4D; /* Darker blue on hover */
+}
+
+ul {
+    list-style-type: none; /* Remove default list styling */
+    padding: 0; /* Remove padding */
+}
+
+li {
+    background-color: #ffffff; /* White background for list items */
+    padding: 10px; /* Padding for list items */
+    margin: 5px 0; /* Margin between list items */
+    border: 1px solid #ddd; /* Light gray border */
+    border-radius: 4px; /* Rounded corners */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}

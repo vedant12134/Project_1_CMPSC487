@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUN Lab Access System</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js';
+        import { getAnalytics } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-analytics.js';
+        import { getFirestore, collection, addDoc, query, where, getDocs, Timestamp } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCnOdXh_4obiuNY7_nN_D7bwKn3BdXlkxk",
+            authDomain: "sunlab-8aadb.firebaseapp.com",
+            projectId: "sunlab-8aadb",
+            storageBucket: "sunlab-8aadb.appspot.com",
+            messagingSenderId: "1045638689145",
+            appId: "1:1045638689145:web:143583d3ce8f2376ce7fa8",
+            measurementId: "G-CGZXDNTP3H"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+
+        const ADMIN_PASSWORD = '12134'; // Static password (avoid in production)
+
+        async function recordAccess(studentId, role) {
+            // Validate the student ID
+            if (!/^[9][0-9]{8}$/.test(studentId)) {
+                alert('Student ID must be 9 digits long and start with 9.');
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, 'accessRecords'), { studentId, role, timestamp: Timestamp.now() });
+                alert('Access recorded!');
+            } catch (error) {
+                console.error('Error recording access: ', error);
+                alert('Failed to record access.');
+            }
+        }
+
+        async function fetchAccessRecords(studentId, startTime, endTime) {
+            let accessQuery = collection(db, 'accessRecords');
+
+            if (studentId) accessQuery = query(accessQuery, where('studentId', '==', studentId));
+            if (startTime) accessQuery = query(accessQuery, where('timestamp', '>=', Timestamp.fromDate(new Date(startTime))));
+            if (endTime) accessQuery = query(accessQuery, where('timestamp', '<=', Timestamp.fromDate(new Date(endTime))));
+
+            try {
+                const snapshot = await getDocs(accessQuery);
+                return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            } catch (error) {
+                console.error('Error fetching access records: ', error);
+                alert('Failed to fetch records.');
+                return [];
+            }
+        }
+
+        async function updateUserStatus(studentId, status) {
+            try {
+                const response = await fetch('/api/updateStatus', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ studentId, status })
+                });
+
+                if (!response.ok) {
+                    throw new Error(await response.text());
+                }
+
+                const data = await response.json();
+                alert(data.message);
+            } catch (error) {
+                console.error('Error updating user status:', error);
+                alert('Failed to update user status.');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Admin Access Button logic
+            document.getElementById('adminAccess').addEventListener('click', () => {
+                const adminPassword = prompt('Enter admin password:');
+                if (adminPassword === ADMIN_PASSWORD) {
+                    sessionStorage.setItem('isAdminAuthenticated', 'true');
+                    alert('Admin access granted!');
+                } else {
+                    alert('Incorrect password.');
+                }
+            });
+
+            // Fetch Records (requires admin access)
+            document.getElementById('fetchRecords').addEventListener('click', async () => {
+                if (sessionStorage.getItem('isAdminAuthenticated') !== 'true') {
+                    alert('Admin access required. Please click "Admin Access" and enter the password.');
+                    return;
+                }
+
+                const studentId = document.getElementById('adminStudentId').value.trim();
+                const date = document.getElementById('adminDate').value;
+
+                let startTime = null;
+                let endTime = null;
+
+                if (date) {
+                    startTime = `${date}T00:00:00`;
+                    endTime = `${date}T23:59:59`;
+                }
+
+                const records = await fetchAccessRecords(studentId, startTime, endTime);
+                const recordsList = document.getElementById('adminRecordsList');
+                recordsList.innerHTML = '';
+
+                if (records.length === 0) {
+                    recordsList.innerHTML = '<li>No records found.</li>';
+                    return;
+                }
+
+                records.forEach(record => {
+                    const li = document.createElement('li');
+                    const recordTimestamp = new Date(record.timestamp.toDate()); // Convert Firestore Timestamp
+                    li.textContent = `ID: ${record.studentId}, Role: ${record.role}, Timestamp: ${recordTimestamp.toLocaleString()}`;
+                    recordsList.appendChild(li);
+                });
+            });
+
+            // Update Status (using the fetch API)
+            document.getElementById('statusForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+
+                if (sessionStorage.getItem('isAdminAuthenticated') !== 'true') {
+                    alert('Admin access required. Please click "Admin Access" and enter the password.');
+                    return;
+                }
+
+                const studentId = document.getElementById('statusStudentId').value.trim();
+                const status = document.getElementById('statusUpdate').value;
+
+                if (!studentId) {
+                    alert('Student ID cannot be empty.');
+                    return;
+                }
+
+                updateUserStatus(studentId, status);
+            });
+
+            // Record Access Form Submission
+            document.getElementById('accessForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const studentId = document.getElementById('studentId').value.trim();
+                const role = document.getElementById('userRole').value;
+
+                await recordAccess(studentId, role);
+                document.getElementById('accessForm').reset();
+            });
+        });
+    </script>
+</head>
+<body>
+<h1>SUN Lab Access System</h1>
+
+<!-- Admin Access Button -->
+<div>
+    <button id="adminAccess">Admin Access</button>
+</div>
+
+<div>
+    <h2>Record Access</h2>
+    <form id="accessForm">
+        <input type="text" id="studentId" placeholder="Student ID" required>
+        <select id="userRole" required>
+            <option value="student">Student</option>
+            <option value="faculty">Faculty</option>
+            <option value="staff">Staff</option>
+            <option value="other">Other</option>
+        </select>
+        <button type="submit">Record Access</button>
+    </form>
+</div>
+
+<div>
+    <h2>Admin Access History</h2>
+    <input type="text" id="adminStudentId" placeholder="Student ID">
+    <input type="date" id="adminDate">
+    <button id="fetchRecords">Fetch Records</button>
+    <ul id="adminRecordsList"></ul>
+</div>
+
+<div>
+    <h2>Manage User Status</h2>
+    <form id="statusForm">
+        <input type="text" id="statusStudentId" placeholder="Student ID" required>
+        <select id="statusUpdate" required>
+            <option value="active">Activate</option>
+            <option value="suspended">Suspend</option>
+            <option value="reactivated">Reactivate</option>
+        </select>
+        <button type="submit">Update Status</button>
+    </form>
+</div>
+</body>
+</html>
