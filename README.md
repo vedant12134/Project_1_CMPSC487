@@ -40,7 +40,6 @@ This project is a web-based application for managing access to the SUN Lab. The 
 - `index.html`: Main frontend file.
 - `style.css`: Stylesheet for frontend design.
 - `index.js`: Backend logic (Node.js).
-- `firebaseConfig.js`: Firebase configuration for database and services.
   
 ## Database Requirements
 
